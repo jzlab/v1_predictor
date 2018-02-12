@@ -1,22 +1,10 @@
 Training and evaluating the CNN for "Using deep learning to reveal the neural code for images in primary visual cortex" by William F. Kindel, Elijah D. Christensen and Joel Zylberberg https://arxiv.org/abs/1706.06208 (2017).
 
----- Overview ---
+# Overview
 
 This program trains and evaluates a convolutional neural network (CNN) whose input is an image and whose output is the predicted firing rates of every neuron in a given data file. This CNN has two convolutional layers followed by a densily connected hidden layer with hyper-parameters described below. To quantify the performance of the predictor, we compare the network’s predicted firing rates to the neurons’ measured firing rates using a held-out evaluation set using  the Pearson correlation coefficient.
 
-
----- Run ---
-
-From a Unix terminal:
-```bash
-$ python3 runnet.py
-```
-For exampel of ploting output files run:
-```bash
-$ python3 plot1516647610.py
-```
-
----- Files needed ----
+# Necessary Files
 
 python files:
 - runnet.py
@@ -33,19 +21,31 @@ data files:
 - 09mean50ms_smallim_d2_crop.mat
 - 10mean50ms_smallim_d2_crop.mat
 
-plotting example:
+# Examples
+
+From a Unix terminal:
+```bash
+$ python3 runnet.py
+```
+For exampel of ploting output files run:
+```bash
+$ python3 plot1516647610.py
+```
+
+## Plotting Example
 - plot1516647610.py
 - training_manualsave_1516647610.npy
 - persondata1516647610.npy
 
 
----- Versions -----
+# Versions
 
 - Python 3.5.2
 - Tensorlow 1.0.1
+> Also see requirements.txt
 
 
----- Network outputs -----
+# Network Outputs
 
 Written to the manualsave folder located in the working directory. Folder created if not present.
 
@@ -62,7 +62,7 @@ Outputs:
     Load as: [WC1, BC1, WC2, BC2, WH3, BH3, WL4, BL4, step] = np.load(network_manualsave_UNIXTIME.npy)
 
 
---- CNN hyper-parameters ----
+# CNN Hyperparameters
 
 The hyper-parameters of the are written as a FLAG which can be adjusted.
 
