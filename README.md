@@ -76,7 +76,7 @@ Outputs:
 - network_manualsave_UNIXTIME.npy -- the trained weights/parameters of the CNN for the best nextowrk updated as the training goes on.
     Load as: [WC1, BC1, WC2, BC2, WH3, BH3, WL4, BL4, step] = np.load(network_manualsave_UNIXTIME.npy)
 
-# CNN Hyperparameters
+## CNN Hyperparameters
 
 The hyper-parameters of the are written as a FLAG which can be adjusted.
 
