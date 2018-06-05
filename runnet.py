@@ -29,7 +29,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--learning_rate',
       type=float,
-      default=2.00e-4,
+      default=1.00e-4,
       help='Initial learning rate.'
   )
   parser.add_argument(
@@ -83,7 +83,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--dropout',
       type=float,
-      default=0.55,
+      default=0.65,
       help='...'
   )
   parser.add_argument(
@@ -104,7 +104,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--conv1size',
       type=int,
-      default=7,
+      default=3,
       help='Size (linear) of convolution kernel larer 1.'
   )
   parser.add_argument(
@@ -122,7 +122,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--conv2size',
       type=int,
-      default=7,
+      default=3,
       help='Size (linear) of convolution kernel larer 2.'
   )
   parser.add_argument(
@@ -143,7 +143,12 @@ if __name__ == '__main__':
       default=1,
       help='index for which file to load'
   )
-
+  parser.add_argument(
+      '--numconvlayer',
+      type=int,
+      default=2,
+      help='number of convolutional layers'
+  )
 
 FLAGS, unparsed = parser.parse_known_args()
 
@@ -167,8 +172,8 @@ if (tf.gfile.Exists(mansave_dir) == 0):
 	tf.gfile.MakeDirs(mansave_dir)
 
 #import the network
-import buildnet
-from buildnet import ConvNet 
+import buildnetMay2018 as buildnet
+from buildnetMay2018 import ConvNetDrop 
 #from buildnet import simpleRNN
 #from buildnet import RConvNet
 #from buildnet import LnonL
@@ -253,7 +258,7 @@ class loaddata(object):
 
 # list of filenames for data. update this.
 #files must be in same dir
-filearray = ['01mean50ms_smallim_d2_crop.mat', '03mean50ms_smallim_d2_crop.mat', '04mean50ms_smallim_d2_crop.mat', 
+filearray = ['01mean50ms_smallim_d2_crop.mat','02mean50ms_smallim_d2_crop.mat', '03mean50ms_smallim_d2_crop.mat', '04mean50ms_smallim_d2_crop.mat', 
 				'05mean50ms_smallim_d2_crop.mat', '06mean50ms_smallim_d2_crop.mat', '07mean50ms_smallim_d2_crop.mat', 
 				'08mean50ms_smallim_d2_crop.mat', '09mean50ms_smallim_d2_crop.mat', '10mean50ms_smallim_d2_crop.mat']
 fileindex = FLAGS.fileindex
@@ -278,7 +283,7 @@ print('number of trials %d' % (numtrials))
 print('number of  pixels are %d X %d' % (numpixx,numpixy))
 
 
-def run_training(lossbaseline):
+def run_training(lossbaseline, lossbaselinenueron):
 	#start the training
 	with tf.Graph().as_default():
 		# generate placeholders
@@ -289,17 +294,28 @@ def run_training(lossbaseline):
 
 		# network hyper-parameters as arrays
 		#2 conv layers
-		num_filter_list = [FLAGS.conv1, FLAGS.conv2] # [16,32]
-		filter_size_list = [FLAGS.conv1size, FLAGS.conv2size] # [7,7]
-		pool_stride_list = [FLAGS.nstride1, FLAGS.nstride2] # [2,2]
-		pool_k_list =[FLAGS.nk1, FLAGS.nk2 ]  # [3, 3]
+		if FLAGS.numconvlayer == 1:
+			num_filter_list = [FLAGS.conv1] 
+			filter_size_list = [FLAGS.conv1size] 
+			pool_stride_list = [FLAGS.nstride1] 
+			pool_k_list =[FLAGS.nk1]		
+		elif FLAGS.numconvlayer == 2:
+			num_filter_list = [FLAGS.conv1, FLAGS.conv2] # [16,32]
+			filter_size_list = [FLAGS.conv1size, FLAGS.conv2size] # [7,7]
+			pool_stride_list = [FLAGS.nstride1, FLAGS.nstride2] # [2,2]
+			pool_k_list =[FLAGS.nk1, FLAGS.nk2 ]  # [3, 3]
+		elif FLAGS.numconvlayer == 3:
+			num_filter_list = [FLAGS.conv1, FLAGS.conv2, FLAGS.conv2] # [16,32]
+			filter_size_list = [FLAGS.conv1size, FLAGS.conv2size, FLAGS.conv2size] # [7,7]
+			pool_stride_list = [FLAGS.nstride1, FLAGS.nstride2, FLAGS.nstride2] # [2,2]
+			pool_k_list =[FLAGS.nk1, FLAGS.nk2, FLAGS.nk2]  # [3, 3]
 		#1 all-to-all hidden layer
 		dense_list = [FLAGS.hidden1] # [300]
 		keep_prob = FLAGS.dropout # 0.55
 		numcell = data.numcell
 
 		# define the network model 
-		model = ConvNet(images_placeholder, 
+		model = ConvNetDrop(images_placeholder, 
 			num_filter_list, filter_size_list, pool_stride_list, 
 			pool_k_list, dense_list, keep_prob_placeholder,numcell)
 		
@@ -308,6 +324,7 @@ def run_training(lossbaseline):
 
 		## Add to the Graph the Ops for loss calculation.
 		loss = buildnet.loss(model.output, activity_placeholder)
+		loss_per_nueron = buildnet.losspercell(model.output, activity_placeholder)
 		train_op = buildnet.training(loss, FLAGS.learning_rate)
 
 		# Add the variable initializer Op.
@@ -358,8 +375,10 @@ def run_training(lossbaseline):
 				
 				feed_dict={images_placeholder: data.xeval, activity_placeholder: data.yeval, keep_prob_placeholder:1}
 				losseval = sess.run(loss, feed_dict=feed_dict)
+
+          	
 				evallist.append(losseval) # list of loss on eval set
-				3#computting r eval on eval set
+				#computting r eval on eval set
 				actpredict_eval = sess.run(model.output, feed_dict=feed_dict)
 				reval= np.zeros(data.numcell)
 				for icell in range(data.numcell):
@@ -391,6 +410,7 @@ def run_training(lossbaseline):
 					# compute r val again. Could use above values. 
 					rval= np.zeros(data.numcell)
 					feed_dict={images_placeholder: data.xeval, activity_placeholder: data.yeval, keep_prob_placeholder:1}
+					loss_per_nueron_eval = sess.run(loss_per_nueron, feed_dict=feed_dict)
 					actpredict_eval = sess.run(model.output, feed_dict=feed_dict)
 					rval= np.zeros(data.numcell)
 					for icell in range(data.numcell):
@@ -403,7 +423,7 @@ def run_training(lossbaseline):
 					if FLAGS.savenetwork:
 						network_save(step) #save the parameters of network
 					if FLAGS.save:
-						plotandsaver(rval,step) #save the performance of network 
+						plotandsaver(rval, step, loss_per_nueron_eval, lossbaselinenueron) #save the performance of network 
 
 		print("Final results")
 		print("Best perforance ")
@@ -415,8 +435,9 @@ def run_training(lossbaseline):
         
 def baseline_error(): 
 	# make the baseline predictor
-	meanactdum = np.sum(data.yeval, axis=0)/data.numtrials
-	meanactdum  = np.mean(data.yeval, axis=0)
+	#meanactdum = np.sum(data.yeval, axis=0)/data.numtrials
+	#meanactdum  = np.mean(data.yeval, axis=0)
+	meanactdum  = np.mean(data.ytrain, axis=0)
 	
 	meanact =  np.reshape(meanactdum, [1,meanactdum.size])
 	meanpredict = np.repeat(meanact,data.numeval, axis=0)
@@ -448,7 +469,7 @@ def baseline_error():
 	return loss_baseline_eval, loss_baseline_eval_percell
 
 
-def plotandsaver(rval,step):
+def plotandsaver(rval,step, loss_per_nueron_eval, lossbaselinenueron):
 	figN, axN = plt.subplots()
 	bar_width = 0.40
 	xvals = np.arange(len(rval))+1-bar_width/2
@@ -459,7 +480,7 @@ def plotandsaver(rval,step):
 	traintrials = data.traintrials
 	earlystoptrials = data.earlystoptrials
 	evaltrials = data.evaltrials
-	np.save(pearsonsavedatadir,[rval,step,traintrials, earlystoptrials, evaltrials, FLAGS])
+	np.save(pearsonsavedatadir,[rval,step,loss_per_nueron_eval,lossbaselinenueron, evalvar,traintrials,earlystoptrials,evaltrials,FLAGS])
  
   
 def network_save(step):
@@ -473,22 +494,27 @@ def network_save(step):
 		WC1 = sess.run(weights1)
 		biases1 = tf.get_variable('b')
 		BC1 =sess.run(biases1)
-	with tf.variable_scope('conv2', reuse = True) as scope:
-		weights2 = tf.get_variable('W')
-		WC2 = sess.run(weights2)
-		biases2 = tf.get_variable('b')
-		BC2 =sess.run(biases2)
+	if FLAGS.numconvlayer != 1:
+		with tf.variable_scope('conv2', reuse = True) as scope:
+			weights2 = tf.get_variable('W')
+			WC2 = sess.run(weights2)
+			biases2 = tf.get_variable('b')
+			BC2 =sess.run(biases2)
 	with tf.variable_scope('dense1', reuse = True) as scope:
 		weights3 = tf.get_variable('W')
-		WH3 = sess.run(weights3)
+		WH = sess.run(weights3)
 		biases3 = tf.get_variable('b')
-		BH3 = sess.run(biases3)
+		BH = sess.run(biases3)
 	with tf.variable_scope('linear', reuse = True) as scope:
 		weights4 = tf.get_variable('W')
-		WL4 = sess.run(weights4)
+		WL = sess.run(weights4)
 		biases4 = tf.get_variable('b')
-		BL4 = sess.run(biases4)    
-	np.save(savenetworkname,[WC1, BC1, WC2, BC2, WH3, BH3, WL4, BL4, step])
+		BL = sess.run(biases4)
+	if FLAGS.numconvlayer == 1:
+		np.save(savenetworkname,[WC1, BC1, WH, BH, WL, BL, step])
+	else:
+		np.save(savenetworkname,[WC1, BC1, WC2, BC2, WH, BH, WL, BL, step])
+
 
 
 def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
@@ -509,22 +535,24 @@ def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
 	axA.set_ylim([ymin,ymax])
 	axA.set_xlabel('step')
   	## Make the y-axis label, ticks and tick labels match the line color.
-  	#axA.axvline(x=step[minindex], ymin=-.1, ymax = 2, linewidth=2, color='k')
+	axA.axvline(x=step[minindex], ymin=-.1, ymax = 2, linewidth=2, color='k')
 	axA.set_ylabel('least squared loss', color='k')
 	axA.tick_params('y', colors='k')
-  	#axA.annotate('Step: %d (frac noise:%.3f ) ' % (step[minindex],fracnoiseexplane[minindex] ), xy=(textx, 0.95*deltay+ymin))
-  	#axA.annotate('Max pool 1 stide: %d ' % (FLAGS.nstride), xy=(textx, 0.90*deltay+ymin))
-  	#axA.annotate('Max pool 1 kernel size: %d ' % (FLAGS.nk), xy=(textx, 0.85*deltay+ymin))
-  	#axA.annotate('Conv 1 size: %d X %d ' % (FLAGS.conv1size, FLAGS.conv1size), xy=(textx, 0.80*deltay+ymin))
-  	#axA.annotate('number of L 1 filters: %d' % (FLAGS.conv1), xy=(textx, 0.75*deltay+ymin))
-	#axA.annotate('Max pool 2 stide: %d ' % (FLAGS.nstride2), xy=(textx, 0.70*deltay+ymin))
-  	#axA.annotate('Max pool 2 kernel size: %d ' % (FLAGS.nk2), xy=(textx, 0.65*deltay+ymin))
-  	#axA.annotate('Conv 2 size: %d X %d ' % (FLAGS.conv2size, FLAGS.conv2size), xy=(textx, 0.60*deltay+ymin))
-  	#axA.annotate('number of L 1 filters: %d' % (FLAGS.conv2), xy=(textx, 0.55*deltay+ymin))
-  	#axA.annotate('Dropout keep rate: %.3f ' % (FLAGS.dropout), xy=(textx, 0.50*deltay+ymin))
- 	#axA.annotate('%d hidden elements' % (FLAGS.hidden1 ), xy=(textx, 0.45*deltay+ymin))
-	#axA.annotate('Learning rate: %.1e' % (FLAGS.learning_rate), xy=(textx, 0.40*deltay+ymin))
-	#axA.annotate('Image decimation: %d ' % (decimater), xy=(textx, 0.35*deltay+ymin))
+	axA.annotate('Step: %d' % (step[minindex] ), xy=(textx, 1.0*deltay+ymin))
+	axA.annotate('avg r: %.3f; eval loss %.4f / eval var %.4f' % (np.mean(rlist[minindex]),np.mean(evallist[minindex]), np.mean(evalvar) ), xy=(textx, 0.95*deltay+ymin))
+	axA.annotate('Max pool 1 stide: %d ' % (FLAGS.nstride1), xy=(textx, 0.90*deltay+ymin))
+	axA.annotate('Max pool 1 kernel size: %d ' % (FLAGS.nk1), xy=(textx, 0.85*deltay+ymin))
+	axA.annotate('Conv 1 size: %d X %d ' % (FLAGS.conv1size, FLAGS.conv1size), xy=(textx, 0.80*deltay+ymin))
+	axA.annotate('number of L 1 filters: %d' % (FLAGS.conv1), xy=(textx, 0.75*deltay+ymin))
+	axA.annotate('Max pool 2 stide: %d ' % (FLAGS.nstride2), xy=(textx, 0.70*deltay+ymin))
+	axA.annotate('Max pool 2 kernel size: %d ' % (FLAGS.nk2), xy=(textx, 0.65*deltay+ymin))
+	axA.annotate('Conv 2 size: %d X %d ' % (FLAGS.conv2size, FLAGS.conv2size), xy=(textx, 0.60*deltay+ymin))
+	axA.annotate('number of L 2 filters: %d' % (FLAGS.conv2), xy=(textx, 0.55*deltay+ymin))
+	axA.annotate('Dropout keep rate: %.3f ' % (FLAGS.dropout), xy=(textx, 0.50*deltay+ymin))
+	axA.annotate('%d hidden elements' % (FLAGS.hidden1 ), xy=(textx, 0.45*deltay+ymin))
+	axA.annotate('Learning rate: %.1e' % (FLAGS.learning_rate), xy=(textx, 0.40*deltay+ymin))
+	axA.annotate('Num conv layers: %d ' % (FLAGS.numconvlayer), xy=(textx, 0.35*deltay+ymin))
+	#axA.annotate('Image decimation: %d ' % (decimater), xy=(textx, 0.3*deltay+ymin))
 	plt.legend(loc=4)
 	axB = axA.twinx()
 	axB.plot(np.asarray(step), np.asarray(rlist), 'k')
@@ -544,7 +572,7 @@ def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
 
 def main(_):
   lossbaseline, lossbaselinenueron  = baseline_error()
-  run_training(lossbaseline)
+  run_training(lossbaseline, lossbaselinenueron)
 
 
 # run main  

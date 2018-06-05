@@ -115,6 +115,98 @@ class RConvNet(object):
 		# output for pre training the conv
 		self.pretrain = linearpretrain
 
+class ConvNetDrop(object):
+	"""
+	A Convolutional nueral network to predict nueron firing rates due to images 
+	"""
+	def __init__(
+		self, images, num_filter_list, filter_size_list, pool_stride_list,
+		pool_k_list, dense_list, keep_prob, ncell):
+		#self, images,  img_pix, num_filter_list, filter_size_list, 
+		#pool_stride_list, pool_k_list, dense_list, keep_prob, ncell):
+		
+		# number of input channels
+		#dum,dum,dum, imgchannels = tf.shape(images)
+		print("start building network")
+		dum,dum,dum, imgchannels = images.shape
+		#num_channel_in = num_filter_list
+		num_channel_in = []
+		for i in range(len(filter_size_list)):
+			if i == 0:
+				#num_channel_in[i] = int(imgchannels)
+				num_channel_in.append(int(imgchannels))
+			else:
+				#num_channel_in[i] = num_filter_list[i-1]
+				num_channel_in.append(num_filter_list[i-1])
+		# Create a convolution + maxpool layer for each filter size
+		previous_layer = images
+		for i in range(len(filter_size_list)):
+			print("building layer conv%d" % (i+1))
+			#with tf.name_scope("conv%d" % (i+1)):
+			with tf.variable_scope("conv%d" % (i+1)):
+				# Convolution Layer
+				filter_shape = [filter_size_list[i], filter_size_list[i], num_channel_in[i], num_filter_list[i]]
+				print("with %d filters shaped "  % (int(num_filter_list[i])))
+				print(filter_shape)
+				#W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
+				W = tf.get_variable("W", initializer = tf.truncated_normal(filter_shape, stddev=0.1))
+				#print('num_filter_list[i]')
+				#print(num_filter_list[i])
+				#b = tf.Variable(tf.constant(0.0, shape= [num_filter_list[i]]), name="b")
+				b = tf.get_variable("b", initializer = tf.constant(0.0, shape= [num_filter_list[i]]))
+				conv = tf.nn.conv2d(
+					previous_layer,
+					W,
+					strides=[1, 1, 1, 1],
+					padding="VALID",
+					name="conv")
+				# Apply nonlinearity
+				h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
+				# Maxpooling over the outputs
+				pooled = tf.nn.max_pool(
+					h,
+					ksize=[1, pool_k_list[i], pool_k_list[i], 1],
+					strides=[1, pool_stride_list[i], pool_stride_list[i], 1],
+					padding='VALID',
+					name="pool")
+				current_conv_layer = pooled
+				print("curret layer is ")
+				print(current_conv_layer)
+			previous_layer = current_conv_layer
+		# flatted output of the conv-maxpool block
+		convout_flat = tf.contrib.layers.flatten(current_conv_layer) 
+		
+		# create the densely connected block
+		previous_layer = convout_flat
+		for i in range(len(dense_list)):
+			print("building layer dense%d" % (i+1))
+			with tf.variable_scope("dense%d" % (i+1)):
+				dim = previous_layer.get_shape()[1].value
+				print("maping %d elemements to %d elements" % (dim, dense_list[i]))
+				W = tf.get_variable('W',
+					initializer=tf.truncated_normal([dim, dense_list[i]],
+						stddev=0.1 / math.sqrt(float(dim))))
+				b = tf.get_variable('b', initializer = tf.zeros([dense_list[i]]))
+				current_dense_layer = tf.nn.relu(tf.add(tf.matmul(previous_layer, W),b))
+			previous_layer = current_dense_layer
+		denseout = previous_layer
+		
+		# linear
+		with tf.variable_scope('linear'):
+			print("building linear layer")
+			dim = denseout.get_shape()[1].value
+			weights = tf.get_variable('W',
+				initializer = tf.truncated_normal([dim, ncell],
+					stddev=0.1 / math.sqrt(float(dim))))
+			biases = tf.get_variable('b', initializer = tf.zeros([ncell]))
+			denseout_drop = tf.nn.dropout(denseout, keep_prob)
+			linear = tf.nn.relu(tf.add(tf.matmul(denseout_drop, weights),biases))
+			#linear = tf.nn.relu(tf.add(tf.matmul(denseout, weights),biases))
+			print("linear maping %d elemements to %d elements" % (dim, ncell))
+		self.output = linear
+		print("Finished building network")
+
+
 
 class ConvNet(object):
 	"""
@@ -415,6 +507,26 @@ def losspercell(linear, y_):
 	##cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
 	##    labels=labels, logits=logits, name='xentropy')
 	return tf.reduce_mean(tf.square(linear - y_),0, name = 'least_squares')#tf.reduce_mean(cross_entropy, name='xentropy_mean')
+
+
+def lossloglike(linear, y_):
+	"""Calculates the least squre loss from the measured 
+	and predicted activity for each cell.
+
+	#Args:
+	#l
+	#l
+	
+	#Returns:
+	#loss: Loss tensor of type float size num cells.
+	#"""
+	##labels = tf.to_int64(labels)
+	##cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+	##    labels=labels, logits=logits, name='xentropy')
+	epsilon = 1e-6
+	lossvector = linear - tf.multiply(y_, tf.log(linear + epsilon))
+	return tf.reduce_mean(lossvector, name = 'log_like')
+	#return tf.reduce_mean(tf.square(linear - y_),0, name = 'least_squares')#tf.reduce_mean(cross_entropy, name='xentropy_mean')
 
 
 def training(loss, learning_rate):
