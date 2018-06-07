@@ -24,137 +24,136 @@ import scipy as scipy
 from scipy.stats import pearsonr
 
 FLAGS = None
-if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument(
-      '--data_dir',
-      type=str,
-      default=os.getcwd(),
-      help='Data directory containing 0Nmean50ms_smallim_d2_crop.mat files'
-  )
-  parser.add_argument(
-      '--learning_rate',
-      type=float,
-      default=1.00e-4,
-      help='Initial learning rate.'
-  )
-  parser.add_argument(
-      '--max_steps',
-      type=int,
-      default=60000,
-      help='Number of steps to run trainer.'
-  )
-  parser.add_argument(
-      '--conv1',
-      type=int,
-      default=16,
-      help='Number of filters in conv 1.'
-  )
-  parser.add_argument(
-      '--conv2',
-      type=int,
-      default=32,
-      help='Number of filters in conv 2.'
-  )
-  parser.add_argument(
-      '--hidden1',
-      type=int,
-      default=300,
-      help='Number of units in hidden layer 1.'
-  )
-  parser.add_argument(
-      '--hidden2',
-      type=int,
-      default=1,
-      help='Number of units in hidden layer 2. Not used.'
-  )
-  parser.add_argument(
-      '--batch_size',
-      type=int,
-      default=50,
-      help='Batch size. '
-  )
-  parser.add_argument(
-      '--trainingset_frac',
-      type=float,
-      default=2/3,
-      help='Training set size (fraction of images).'
-  )
-  parser.add_argument(
-      '--earlystop_frac',
-      type=float,
-      default=1/7,
-      help='Early stop set size (fraction of images).'
-  )
-  parser.add_argument(
-      '--dropout',
-      type=float,
-      default=0.65,
-      help='...'
-  )
-  parser.add_argument(
-      '--save',
-      default = True,
-      help='If true, save the results.'
-  )
-  parser.add_argument(
-      '--savetraining',
-      default = True,
-      help='If true, save the traing.'
-  )
-  parser.add_argument(
-      '--savenetwork',
-      default = False,
-      help='If true, save the network'
-  )
-  parser.add_argument(
-      '--conv1size',
-      type=int,
-      default=3,
-      help='Size (linear) of convolution kernel larer 1.'
-  )
-  parser.add_argument(
-      '--nk1',
-      type=int,
-      default=3,
-      help='Size of max pool kernel layer 1.'
-  )
-  parser.add_argument(
-      '--nstride1',
-      type=int,
-      default=2,
-      help='Size of max pool stride layer 1.'
-  )
-  parser.add_argument(
-      '--conv2size',
-      type=int,
-      default=3,
-      help='Size (linear) of convolution kernel larer 2.'
-  )
-  parser.add_argument(
-      '--nk2',
-      type=int,
-      default=3,
-      help='Size of max pool kernel layer 2.'
-  )
-  parser.add_argument(
-      '--nstride2',
-      type=int,
-      default=2,
-      help='Size of max pool stride.'
-  )
-  parser.add_argument(
-      '--fileindex',
-      type=int,
-      default=1,
-      help='index for which file to load'
-  )
-  parser.add_argument(
-      '--numconvlayer',
-      type=int,
-      default=2,
-      help='number of convolutional layers'
-  )
+parser = argparse.ArgumentParser()
+parser.add_argument(
+  '--data_dir',
+  type=str,
+  default=os.getcwd(),
+  help='Data directory containing 0Nmean50ms_smallim_d2_crop.mat files'
+)
+parser.add_argument(
+  '--learning_rate',
+  type=float,
+  default=1.00e-4,
+  help='Initial learning rate.'
+)
+parser.add_argument(
+  '--max_steps',
+  type=int,
+  default=60000,
+  help='Number of steps to run trainer.'
+)
+parser.add_argument(
+  '--conv1',
+  type=int,
+  default=16,
+  help='Number of filters in conv 1.'
+)
+parser.add_argument(
+  '--conv2',
+  type=int,
+  default=32,
+  help='Number of filters in conv 2.'
+)
+parser.add_argument(
+  '--hidden1',
+  type=int,
+  default=300,
+  help='Number of units in hidden layer 1.'
+)
+parser.add_argument(
+  '--hidden2',
+  type=int,
+  default=1,
+  help='Number of units in hidden layer 2. Not used.'
+)
+parser.add_argument(
+  '--batch_size',
+  type=int,
+  default=50,
+  help='Batch size. '
+)
+parser.add_argument(
+  '--trainingset_frac',
+  type=float,
+  default=2/3,
+  help='Training set size (fraction of images).'
+)
+parser.add_argument(
+  '--earlystop_frac',
+  type=float,
+  default=1/7,
+  help='Early stop set size (fraction of images).'
+)
+parser.add_argument(
+  '--dropout',
+  type=float,
+  default=0.65,
+  help='...'
+)
+parser.add_argument(
+  '--save',
+  default = True,
+  help='If true, save the results.'
+)
+parser.add_argument(
+  '--savetraining',
+  default = True,
+  help='If true, save the traing.'
+)
+parser.add_argument(
+  '--savenetwork',
+  default = False,
+  help='If true, save the network'
+)
+parser.add_argument(
+  '--conv1size',
+  type=int,
+  default=3,
+  help='Size (linear) of convolution kernel larer 1.'
+)
+parser.add_argument(
+  '--nk1',
+  type=int,
+  default=3,
+  help='Size of max pool kernel layer 1.'
+)
+parser.add_argument(
+  '--nstride1',
+  type=int,
+  default=2,
+  help='Size of max pool stride layer 1.'
+)
+parser.add_argument(
+  '--conv2size',
+  type=int,
+  default=3,
+  help='Size (linear) of convolution kernel larer 2.'
+)
+parser.add_argument(
+  '--nk2',
+  type=int,
+  default=3,
+  help='Size of max pool kernel layer 2.'
+)
+parser.add_argument(
+  '--nstride2',
+  type=int,
+  default=2,
+  help='Size of max pool stride.'
+)
+parser.add_argument(
+  '--fileindex',
+  type=int,
+  default=1,
+  help='index for which file to load'
+)
+parser.add_argument(
+  '--numconvlayer',
+  type=int,
+  default=2,
+  help='number of convolutional layers'
+)
 
 FLAGS, unparsed = parser.parse_known_args()
 
@@ -178,9 +177,9 @@ if (tf.gfile.Exists(mansave_dir) == 0):
 	tf.gfile.MakeDirs(mansave_dir)
 
 #import the network
-import buildnet as buildnet
-from buildnet import simpleRNN, ConvNetDrop, RConvNet, LnonL
-from utils import DataLoader
+import src.buildnet as buildnet
+from src.buildnet import simpleRNN, ConvNetDrop, RConvNet, LnonL
+from src.utils import DataLoader
 
 # list of filenames for data. update this.
 data_dir = FLAGS.data_dir
@@ -221,7 +220,7 @@ numpixy = data.numpixy
 print('number of trials %d' % (numtrials))
 print('number of  pixels are %d X %d' % (numpixx,numpixy))
 
-def run_training(lossbaseline, lossbaselinenueron):
+def run_training(lossbaseline, lossbaselinenueron, model=None):
 	#start the training
 	with tf.Graph().as_default():
 		# generate placeholders
@@ -247,15 +246,17 @@ def run_training(lossbaseline, lossbaselinenueron):
 			filter_size_list = [FLAGS.conv1size, FLAGS.conv2size, FLAGS.conv2size] # [7,7]
 			pool_stride_list = [FLAGS.nstride1, FLAGS.nstride2, FLAGS.nstride2] # [2,2]
 			pool_k_list =[FLAGS.nk1, FLAGS.nk2, FLAGS.nk2]  # [3, 3]
+
 		#1 all-to-all hidden layer
 		dense_list = [FLAGS.hidden1] # [300]
 		keep_prob = FLAGS.dropout # 0.55
 		numcell = data.numcell
 
-		# define the network model 
-		model = ConvNetDrop(images_placeholder, 
-			num_filter_list, filter_size_list, pool_stride_list, 
-			pool_k_list, dense_list, keep_prob_placeholder,numcell)
+		# if no model passed, use default
+		if model is None:
+			model = ConvNetDrop(images_placeholder, 
+				num_filter_list, filter_size_list, pool_stride_list, 
+				pool_k_list, dense_list, keep_prob_placeholder,numcell)
 		
 		print("model shape is")
 		print(model.output.get_shape())
@@ -266,7 +267,7 @@ def run_training(lossbaseline, lossbaselinenueron):
 		train_op = buildnet.training(loss, FLAGS.learning_rate)
 
 		# Add the variable initializer Op.
-		init = tf.global_variables_initializer()          
+		init = tf.global_variables_initializer()
 
 		# Create a session for running Ops on the Graph.
 		sess = tf.Session()
@@ -509,5 +510,6 @@ def main(_):
   lossbaseline, lossbaselinenueron  = baseline_error()
   run_training(lossbaseline, lossbaselinenueron)
 
-# run main  
-tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+# run main
+if __name__ == '__main__':
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
