@@ -1,4 +1,5 @@
 import os
+import sys
 
 import numpy as np
 import tensorflow as tf
@@ -9,6 +10,11 @@ from runnet import baseline_error, run_training
 from src.buildnet import LNLN
 from src.utils import DataLoader
 from runnet import filearray
+
+
+NUM_UNITS = 150 # Default value
+if len(sys.argv)>1:
+    NUM_UNITS = int(sys.argv[1])
 
 class MockParser():
     def __init__(self,**kwargs):
@@ -33,9 +39,11 @@ def mock_data():
 def register_model(_):
     data = mock_data()
     imgs = data.images.astype(np.float32)
-    model = LNLN(150,imgs,data.numcell)
+    model = LNLN(NUM_UNITS,imgs,data.numcell)
     lossbaseline, lossbaselinenueron  = baseline_error()
     run_training(lossbaseline, lossbaselinenueron, model, dataset=data)
 
 
-tf.app.run(main=register_model)
+if __name__ == '__main__':
+    FLAGS = parser.parse_args()
+    # tf.app.run(main=register_model)

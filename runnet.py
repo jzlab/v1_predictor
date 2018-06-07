@@ -432,6 +432,7 @@ def plotandsaver(rval,step, loss_per_nueron_eval, lossbaselinenueron):
 	earlystoptrials = data.earlystoptrials
 	evaltrials = data.evaltrials
 	np.save(pearsonsavedatadir,[rval,step,loss_per_nueron_eval,lossbaselinenueron, evalvar,traintrials,earlystoptrials,evaltrials,FLAGS])
+	plt.close(figN)
  
   
 def network_save(step):
@@ -467,6 +468,7 @@ def network_save(step):
 		np.save(savenetworkname,[WC1, BC1, WC2, BC2, WH, BH, WL, BL, step])
 
 def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
+	plt.ioff()
 	minindex = np.argmin(np.asarray(earlystoplist))
 	xrange = max(step)
     
@@ -510,6 +512,7 @@ def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
 	axB.tick_params('y', colors='k')
 	figA.tight_layout()
 	plt.savefig(savefigname)
+	plt.close(figA)
 	
 	##saving training parameters
 	traintrials = data.traintrials
