@@ -167,17 +167,14 @@ pearsonsavedir = mansave_dir + '/personplot' + IDtag # saving performance figure
 pearsonsavedatadir = mansave_dir + '/persondata' + IDtag # saving performance data 
 losssavedir = mansave_dir + '/lossplot' + IDtag # not used
 
-#making a folder to save to 
+#making a folder to save to
 if (tf.gfile.Exists(mansave_dir) == 0):
 	tf.gfile.MakeDirs(mansave_dir)
 
 #import the network
 import buildnetMay2018 as buildnet
 from buildnetMay2018 import ConvNetDrop 
-#from buildnet import simpleRNN
-#from buildnet import RConvNet
-#from buildnet import LnonL
-
+from buildnet import simpleRNN, ConvNetDrop, RConvNet, LnonL
 
 class loaddata(object):
 	
