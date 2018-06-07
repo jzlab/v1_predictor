@@ -238,6 +238,9 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 		train_images = tf.Variable(data.xtrain, dtype=tf.float32, trainable=False)
 		train_activity = tf.Variable(data.ytrain, dtype=tf.float32, trainable=False)
 
+		estop_images = tf.Variable(data.xstop, dtype=tf.float32, trainable=False)
+		estop_activity = tf.Variable(data.ystop, dtype=tf.float32, trainable=False)
+
 		# network hyper-parameters as arrays
 		#2 conv layers
 		if FLAGS.numconvlayer == 1:
@@ -270,18 +273,20 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 		
 		else:
 			model.compile()
-			model(images_placeholder)
+			#model(images_placeholder)
 		
+		model_out = model.predict(images_placeholder)
 		print("model shape is")
-		print(model.output.get_shape())
+		print(model_out.get_shape())
 
 		## Add to the Graph the Ops for loss calculation.
-		loss = buildnet.loss(model.output, activity_placeholder)
+		loss = buildnet.loss(model_out, activity_placeholder)
 
 		eval_loss_op = buildnet.loss(model.predict(eval_images), eval_activity)
 		train_loss_op = buildnet.loss(model.predict(train_images), train_activity)
+		estop_loss_op = buildnet.loss(model.predict(estop_images), estop_activity)
 
-		loss_per_nueron = buildnet.losspercell(model.predict(images_placeholder), activity_placeholder)
+		loss_per_nueron = buildnet.losspercell(model_out, activity_placeholder)
 
 		train_op = buildnet.training(loss, FLAGS.learning_rate)
 
@@ -308,8 +313,6 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 			batchindex = np.random.permutation(numtrain)[0:numbatch]
 			xtrainbatch = data.xtrain[batchindex ,:,:,:]
 			ytrainbatch = data.ytrain[batchindex ,:]
-
-
       
 			feed_dict={
 				images_placeholder: xtrainbatch,
@@ -317,18 +320,22 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				keep_prob_placeholder: keep_prob
 				}
 
-			_,loss_value,eloss_val = sess.run([train_op, loss, eval_loss_op],
-                               feed_dict=feed_dict)
-
-			FVE = 1-loss_value/lossbaseline
-			duration = time.time() - start_time
-			# print progress.
 			if step % 50 == 0:
 				## Print status
 				
-				print('Step %d: loss = %.4f; val_loss = %.4f; FVE = %5.2f (%.3f sec)' % (step, loss_value, eloss_val, FVE, duration))
+				_,loss_value,losseval = sess.run([train_op, loss, eval_loss_op],
+                               feed_dict=feed_dict)
+				FVE = 1-loss_value/lossbaseline
+				duration = time.time() - start_time
+				print('Step %d: loss = %.4f; eval_loss = %.4f; FVE = %5.2f (%.3f sec)' % (step, loss_value, losseval, FVE, duration))
+			else:
+				_,loss_value = sess.run([train_op, loss],
+                               feed_dict=feed_dict)
+				FVE = 1-loss_value/lossbaseline
+				
+			# print progress.
       			## save and evaluate the model 
-			if (step + 1) == FLAGS.max_steps or step == 1:
+			if step%500==0 or (step + 1) == FLAGS.max_steps or step == 1:
 				## evaluate and save progress 
 				
 				steplist.append(step) # list of training steps
@@ -336,18 +343,13 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				# feed_dict={images_placeholder: data.xtrain, activity_placeholder: data.ytrain, keep_prob_placeholder:1}
 				ops = [
 					train_loss_op,
-					eval_loss_op,
 					model.predict(eval_images)
 				]
-				losstrain,losseval,actpredict_eval = sess.run(ops)
-				trainlist.append(losstrain) # list of loss on training set
-				## Evaluate against the eval set.
-				
-				# feed_dict={images_placeholder: data.xeval, activity_placeholder: data.yeval, keep_prob_placeholder:1}
-				# losseval = sess.run(loss, feed_dict=feed_dict)
+				losstrain,actpredict_eval = sess.run(ops)
 
-          	
+				trainlist.append(losstrain) # list of loss on training set
 				evallist.append(losseval) # list of loss on eval set
+
 				#computting r eval on eval set
 				# actpredict_eval = sess.run()
 				reval= np.zeros(data.numcell)
