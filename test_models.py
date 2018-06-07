@@ -1,10 +1,10 @@
-import pytest
-import tensorflow as tf
-import numpy as np
 import os
 
-import keras.backend as K
-from src.buildnet import LnonL, LNLN
+import numpy as np
+import tensorflow as tf
+
+from runnet import baseline_error, run_training
+from src.buildnet import LNLN
 from src.utils import DataLoader
 from runnet import filearray
 
@@ -13,7 +13,6 @@ class MockParser():
         for k,v in kwargs.items():
             setattr(self,k,v)
 
-@pytest.fixture
 def mock_data():
     data_dir = os.path.join(os.getcwd(),'data')
 
@@ -29,13 +28,12 @@ def mock_data():
 
     return data
 
-def test_LnonL(mock_data):
-    lin_layer = LnonL(mock_data.images,ncell=mock_data.numcell)
+def register_model(_):
+    data = mock_data()
+    imgs = data.images.astype(np.float32)
+    model = LNLN(150,imgs,data.numcell)
+    lossbaseline, lossbaselinenueron  = baseline_error()
+    run_training(lossbaseline, lossbaselinenueron, model, dataset=data)
 
-    return lin_layer
 
-def test_LNLN(mock_data):
-    imgs = mock_data.images.astype(np.float32)
-    model = LNLN(250, imgs, mock_data.numcell)
-
-    return model
+tf.app.run(main=register_model)

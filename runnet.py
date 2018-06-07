@@ -220,7 +220,10 @@ numpixy = data.numpixy
 print('number of trials %d' % (numtrials))
 print('number of  pixels are %d X %d' % (numpixx,numpixy))
 
-def run_training(lossbaseline, lossbaselinenueron, model=None):
+def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
+	if dataset is not None:
+		data = dataset
+
 	#start the training
 	with tf.Graph().as_default():
 		# generate placeholders
@@ -254,9 +257,13 @@ def run_training(lossbaseline, lossbaselinenueron, model=None):
 
 		# if no model passed, use default
 		if model is None:
+
 			model = ConvNetDrop(images_placeholder, 
 				num_filter_list, filter_size_list, pool_stride_list, 
 				pool_k_list, dense_list, keep_prob_placeholder,numcell)
+		
+		else:
+			model(images_placeholder)
 		
 		print("model shape is")
 		print(model.output.get_shape())
@@ -513,7 +520,7 @@ def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
 
 def main(_):
   lossbaseline, lossbaselinenueron  = baseline_error()
-  run_training(lossbaseline, lossbaselinenueron)
+  run_training(lossbaseline, lossbaselinenueron,dataset=data)
 
 # run main
 if __name__ == '__main__':

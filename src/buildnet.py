@@ -12,6 +12,30 @@ import math
 import tensorflow as tf
 import numpy as np
 
+class FlattenImg(object):
+	def __init__(self):
+		pass
+
+	def __call__(self,images):
+		imgflat = tf.contrib.layers.flatten(images)
+		self.output = imgflat
+
+		return self.output
+
+class LNLN(object):
+	def __init__(self, num_units, images, num_cells):
+		self.num_units = num_units
+		self.num_cells = num_cells
+
+	def __call__(self,images):
+		flat_im = FlattenImg()(images)
+
+		x = tf.contrib.keras.layers.Dense(self.num_units,activation='sigmoid')(flat_im)
+		r = tf.contrib.keras.layers.Dense(self.num_cells,activation='sigmoid')(x)
+
+		self.output = r
+		return r
+
 class LnonL(object):
 	"""
 	A shallow linear non-linear network
@@ -474,9 +498,6 @@ class simpleRNN(object):
 		## set outputs
 		self.output = linear
 		print("Finished building network")
-
-
-
 
 def loss(linear, y_):
 	"""Calculates the least squre loss from the measured and predicted activity .
