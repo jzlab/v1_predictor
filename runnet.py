@@ -27,6 +27,12 @@ FLAGS = None
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument(
+      '--data_dir',
+      type=str,
+      default=os.getcwd(),
+      help='Data directory containing 0Nmean50ms_smallim_d2_crop.mat files'
+  )
+  parser.add_argument(
       '--learning_rate',
       type=float,
       default=1.00e-4,
@@ -172,94 +178,31 @@ if (tf.gfile.Exists(mansave_dir) == 0):
 	tf.gfile.MakeDirs(mansave_dir)
 
 #import the network
-import buildnetMay2018 as buildnet
-from buildnetMay2018 import ConvNetDrop 
+import buildnet as buildnet
 from buildnet import simpleRNN, ConvNetDrop, RConvNet, LnonL
-
-class loaddata(object):
-	
-	def __init__(self, filenamelist):	
-		## load the data from files in 'filenamelist'
-		## creats an object with trianing, early stop and evaluation formatted data 
-		## update filenames in "filenamelist" and the argument in " = mat_contents['argument']"
-		numfiles = len(filenamelist)
-		print("loading %d file(s)" % (numfiles))
-		filename = filenamelist[0]
-		mat_contents = sio.loadmat(filename)
-		activity = mat_contents['activity'] # the raw outputs (firing rates of nuerons), update as needed
-		# activity data formated as array with: [number of images, number of nuerons]  
-		images = mat_contents['images'] # the raw inputs (image), update as needed 
-		# images data formated as: [number of image, number or x pixles, number of y pixles].
-		# for black and white images 
-		activitydum = activity
-		ncellsdum = np.shape(activitydum)[1]
-		print([filename + " ncells:"])
-		print(ncellsdum)
-		if numfiles > 0: # for concatinating servaral files. For adding new outputs (nuerons) for same inputs (image)
-			for index in range(1, numfiles):
-				filename = filenamelist[index]
-				mat_contents = sio.loadmat(filename)
-				activitydum = mat_contents['activity']
-				activity = np.append(activity,activitydum, axis = 1)
-				ncellsdum = np.shape(activitydum)[1]
-				print([filename + " ncells:"])
-				print(ncellsdum) 
-		
-		
-		## parameters of data  
-		actdatashape = activity.shape
-		imgdatashape = images.shape
-		numtrials = actdatashape[0]
-		numimg = imgdatashape[0]
-		numpixx = imgdatashape[1]
-		numpixy = imgdatashape[2]
-		numcell = actdatashape[1]
-		
-		## format into sets
-		randnumimg = np.random.permutation(numtrials)
-		numtrain = int(np.ceil(numimg*FLAGS.trainingset_frac))
-		numerlystop = int(np.floor(numimg*FLAGS.earlystop_frac))
-		numeval =  numimg - numtrain - numerlystop
-		traintrials = randnumimg[0:numtrain]
-		evaltrials = randnumimg[numtrain:numtrain+numeval]
-		earlystoptrials = randnumimg[numtrain+numeval:numimg+1]
-		x = images
-		y = activity
-		xtrain = np.reshape(x[traintrials,:,:],(numtrain,numpixx,numpixy,1))
-		xstop = np.reshape(x[earlystoptrials,:,:],(numerlystop,numpixx,numpixy,1))
-		xeval = np.reshape(x[evaltrials,:,:],(numeval,numpixx,numpixy,1))
-		ytrain = y[traintrials,:]
-		ystop = y[earlystoptrials,:]
-		yeval = y[evaltrials,:]
-		 
-		## set the outputs
-		self.activity = activity
-		self.images = images 
-		self.xtrain = xtrain
-		self.xstop = xstop
-		self.xeval = xeval
-		self.ytrain = ytrain
-		self.ystop = ystop
-		self.yeval = yeval
-		self.numcell = numcell
-		self.numtrials = numtrials
-		self.numimg = numimg
-		self.numpixx = numpixx
-		self.numpixy = numpixy
-		self.traintrials = traintrials
-		self.numtrain = numtrain
-		self.evaltrials = evaltrials
-		self.numeval = numeval
-		self.earlystoptrials = earlystoptrials
-		self.numerlystop = numerlystop
+from utils import DataLoader
 
 # list of filenames for data. update this.
-#files must be in same dir
-filearray = ['01mean50ms_smallim_d2_crop.mat','02mean50ms_smallim_d2_crop.mat', '03mean50ms_smallim_d2_crop.mat', '04mean50ms_smallim_d2_crop.mat', 
-				'05mean50ms_smallim_d2_crop.mat', '06mean50ms_smallim_d2_crop.mat', '07mean50ms_smallim_d2_crop.mat', 
-				'08mean50ms_smallim_d2_crop.mat', '09mean50ms_smallim_d2_crop.mat', '10mean50ms_smallim_d2_crop.mat']
+data_dir = FLAGS.data_dir
 fileindex = FLAGS.fileindex
-data = loaddata([filearray[fileindex]]) # loads and formats all the data
+#files must be in same dir
+filearray = [
+        '01mean50ms_smallim_d2_crop.mat',
+        '02mean50ms_smallim_d2_crop.mat',
+        '03mean50ms_smallim_d2_crop.mat',
+        '04mean50ms_smallim_d2_crop.mat',
+        '05mean50ms_smallim_d2_crop.mat',
+        '06mean50ms_smallim_d2_crop.mat',
+        '07mean50ms_smallim_d2_crop.mat',
+        '08mean50ms_smallim_d2_crop.mat',
+        '09mean50ms_smallim_d2_crop.mat',
+        '10mean50ms_smallim_d2_crop.mat']
+
+filename = filearray[fileindex]
+filepath = os.path.join(data_dir,filename)
+
+data = DataLoader([filepath],FLAGS) # loads and formats all the data
+
 print("total number of cells is %d" % (data.numcell))
 
 print("y eval shape")
@@ -267,7 +210,6 @@ print(np.shape(data.yeval))
 evalvar = np.var(data.yeval,axis=0)
 print("eval var is") 
 print(np.mean(evalvar))
-
 
 numtrain = data.numtrain
 numerlystop = data.numerlystop
@@ -278,7 +220,6 @@ numpixx = data.numpixx
 numpixy = data.numpixy
 print('number of trials %d' % (numtrials))
 print('number of  pixels are %d X %d' % (numpixx,numpixy))
-
 
 def run_training(lossbaseline, lossbaselinenueron):
 	#start the training
@@ -512,8 +453,6 @@ def network_save(step):
 	else:
 		np.save(savenetworkname,[WC1, BC1, WC2, BC2, WH, BH, WL, BL, step])
 
-
-
 def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
 	minindex = np.argmin(np.asarray(earlystoplist))
 	xrange = max(step)
@@ -565,13 +504,10 @@ def mansavefig(trainlist, earlystoplist, evallist, rlist, step, lossbaseline):
 	evaltrials = data.evaltrials
 	np.save(savedirname,[FLAGS, trainlist, earlystoplist, evallist, rlist,
 		step, lossbaseline, traintrials, earlystoptrials, evaltrials])
-              
 
 def main(_):
   lossbaseline, lossbaselinenueron  = baseline_error()
   run_training(lossbaseline, lossbaselinenueron)
 
-
 # run main  
 tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
-  
