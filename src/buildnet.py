@@ -26,14 +26,32 @@ class LNLN(object):
 	def __init__(self, num_units, images, num_cells):
 		self.num_units = num_units
 		self.num_cells = num_cells
+		self.compiled = False
+
+
+	def compile(self):
+		self.flatten = FlattenImg()
+
+		self.dense_1 = tf.contrib.keras.layers.Dense(self.num_units,activation='sigmoid')
+		self.dense_2 = tf.contrib.keras.layers.Dense(self.num_cells,activation='sigmoid')
+
+		self.compiled = True
 
 	def __call__(self,images):
-		flat_im = FlattenImg()(images)
+		assert self.compiled
+		
+		r = self.predict(images)
+		self.output = r
+		return r
 
-		x = tf.contrib.keras.layers.Dense(self.num_units,activation='sigmoid')(flat_im)
-		r = tf.contrib.keras.layers.Dense(self.num_cells,activation='sigmoid')(x)
+	def predict(self,images):
+
+		flat_img = self.flatten(images)
+		x = self.dense_1(flat_img)
+		r = self.dense_2(x)
 
 		self.output = r
+
 		return r
 
 class LnonL(object):
