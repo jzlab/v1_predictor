@@ -317,7 +317,7 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				keep_prob_placeholder: keep_prob
 				}
 
-			_, loss_value = sess.run([train_op, loss],
+			_,loss_value,eloss_val = sess.run([train_op, loss, eval_loss_op],
                                feed_dict=feed_dict)
 
 			FVE = 1-loss_value/lossbaseline
@@ -326,9 +326,9 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 			if step % 50 == 0:
 				## Print status
 				
-				print('Step %d: loss = %.4f; FVE = %5.2f (%.3f sec)' % (step, loss_value, FVE, duration))
+				print('Step %d: loss = %.4f; val_loss = %.4f; FVE = %5.2f (%.3f sec)' % (step, loss_value, eloss_val, FVE, duration))
       			## save and evaluate the model 
-			if (step - 1) % 200 == 0 or (step + 1) == FLAGS.max_steps or step == 1:
+			if (step + 1) == FLAGS.max_steps or step == 1:
 				## evaluate and save progress 
 				
 				steplist.append(step) # list of training steps
