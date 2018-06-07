@@ -20,7 +20,7 @@ class LnonL(object):
 		self, images, ncell):
 		
 		## flatten input
-		imgflat = tf.contrib.layers.flatten(images)
+		imgflat = tf.contrib.layers.flatten(images.astype(np.float32))
 		imgflatshape = imgflat.get_shape()
 		
 		## linear layer
@@ -359,7 +359,6 @@ class ConvLayers(object):
 		
 		self.output = convout
 		print("Finished building convolutional layers")
-
 
 class DenseLayers(object):
 	"""

@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
   '--data_dir',
   type=str,
-  default=os.getcwd(),
+  default=os.path.join(os.getcwd(),'data'),
   help='Data directory containing 0Nmean50ms_smallim_d2_crop.mat files'
 )
 parser.add_argument(
@@ -290,7 +290,12 @@ def run_training(lossbaseline, lossbaselinenueron, model=None):
 			xtrainbatch = data.xtrain[batchindex ,:,:,:]
 			ytrainbatch = data.ytrain[batchindex ,:]
       
-			feed_dict={images_placeholder: xtrainbatch, activity_placeholder: ytrainbatch, keep_prob_placeholder: keep_prob}
+			feed_dict={
+				images_placeholder: xtrainbatch,
+				activity_placeholder: ytrainbatch,
+				keep_prob_placeholder: keep_prob
+				}
+
 			_, loss_value = sess.run([train_op, loss],
                                feed_dict=feed_dict)
 
