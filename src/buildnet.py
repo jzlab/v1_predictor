@@ -28,19 +28,28 @@ class LNLN(object):
 		self.num_cells = num_cells
 		self.compiled = False
 
-
 	def compile(self):
 		self.flatten = FlattenImg()
 
+
+		# Create All to all layers
 		self.dense_1 = tf.contrib.keras.layers.Dense(self.num_units,activation='relu')
+		self.dense_2 = tf.contrib.keras.layers.Dense(self.num_cells,activation='relu')
+
+                # Create nonlinearity scalers
 		with tf.variable_scope('scaled_nonlinear'):
 			print("building non linear layer")
-			weights = tf.get_variable('weights',
+			weights1 = tf.get_variable('weights',
 				initializer = .1+tf.truncated_normal([self.num_units],
 					stddev=0.02))
-			self.biases = tf.get_variable('biases', initializer = tf.zeros([self.num_units]))
-			self.diagweights1 = tf.diag(weights)
-		self.dense_2 = tf.contrib.keras.layers.Dense(self.num_cells,activation='relu')
+			self.biases1 = tf.get_variable('biases', initializer = tf.zeros([self.num_units]))
+			self.diagweights1 = tf.diag(weights1)
+
+			weights2 = tf.get_variable('weights2',
+				initializer = .1+tf.truncated_normal([self.num_cells],
+					stddev=0.02))
+			self.biases2 = tf.get_variable('biases2', initializer = tf.zeros([self.num_cells]))
+			self.diagweights2 = tf.diag(weights2)
 
 		self.compiled = True
 
@@ -55,9 +64,12 @@ class LNLN(object):
 
 		flat_img = self.flatten(images)
 		x = self.dense_1(flat_img)
-		sigmatmul = tf.matmul(x, self.diagweights1)
-		nonlinear = tf.add(sigmatmul, self.biases)
-		r = self.dense_2(nonlinear)
+		x = tf.matmul(x, self.diagweights1)
+		x = tf.add(x, self.biases1)
+
+		x = self.dense_2(x)
+		x = tf.matmul(x, self.diagweights2)
+		r = tf.add(x, self.biases2)
 
 		self.output = r
 

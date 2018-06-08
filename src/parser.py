@@ -43,7 +43,7 @@ def gen_parser():
       '--learning_rate',
       type=float,
       default=1.00e-4,
-      help='Initial learning rate.'
+      help='Initial learning rate. Default=1.00e-4'
     )
     training.add_argument(
       '--max_steps',
