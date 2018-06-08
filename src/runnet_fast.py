@@ -23,10 +23,137 @@ import matplotlib.pyplot as plt
 import scipy as scipy
 from scipy.stats import pearsonr
 
-from src.parser import gen_parser
-
 FLAGS = None
-parser = gen_parser()
+parser = argparse.ArgumentParser()
+parser.add_argument(
+  '--data_dir',
+  type=str,
+  default=os.path.join(os.getcwd(),'data'),
+  help='Data directory containing 0Nmean50ms_smallim_d2_crop.mat files'
+)
+parser.add_argument(
+  '--learning_rate',
+  type=float,
+  default=1.00e-4,
+  help='Initial learning rate.'
+)
+parser.add_argument(
+  '--max_steps',
+  type=int,
+  default=60000,
+  help='Number of steps to run trainer.'
+)
+parser.add_argument(
+  '--conv1',
+  type=int,
+  default=16,
+  help='Number of filters in conv 1.'
+)
+parser.add_argument(
+  '--conv2',
+  type=int,
+  default=32,
+  help='Number of filters in conv 2.'
+)
+parser.add_argument(
+  '--hidden1',
+  type=int,
+  default=300,
+  help='Number of units in hidden layer 1.'
+)
+parser.add_argument(
+  '--hidden2',
+  type=int,
+  default=1,
+  help='Number of units in hidden layer 2. Not used.'
+)
+parser.add_argument(
+  '--batch_size',
+  type=int,
+  default=50,
+  help='Batch size. '
+)
+parser.add_argument(
+  '--trainingset_frac',
+  type=float,
+  default=2/3,
+  help='Training set size (fraction of images).'
+)
+parser.add_argument(
+  '--earlystop_frac',
+  type=float,
+  default=1/7,
+  help='Early stop set size (fraction of images).'
+)
+parser.add_argument(
+  '--dropout',
+  type=float,
+  default=0.65,
+  help='...'
+)
+parser.add_argument(
+  '--save',
+  default = True,
+  help='If true, save the results.'
+)
+parser.add_argument(
+  '--savetraining',
+  default = True,
+  help='If true, save the traing.'
+)
+parser.add_argument(
+  '--savenetwork',
+  default = False,
+  help='If true, save the network'
+)
+parser.add_argument(
+  '--conv1size',
+  type=int,
+  default=3,
+  help='Size (linear) of convolution kernel larer 1.'
+)
+parser.add_argument(
+  '--nk1',
+  type=int,
+  default=3,
+  help='Size of max pool kernel layer 1.'
+)
+parser.add_argument(
+  '--nstride1',
+  type=int,
+  default=2,
+  help='Size of max pool stride layer 1.'
+)
+parser.add_argument(
+  '--conv2size',
+  type=int,
+  default=3,
+  help='Size (linear) of convolution kernel larer 2.'
+)
+parser.add_argument(
+  '--nk2',
+  type=int,
+  default=3,
+  help='Size of max pool kernel layer 2.'
+)
+parser.add_argument(
+  '--nstride2',
+  type=int,
+  default=2,
+  help='Size of max pool stride.'
+)
+parser.add_argument(
+  '--fileindex',
+  type=int,
+  default=1,
+  help='index for which file to load'
+)
+parser.add_argument(
+  '--numconvlayer',
+  type=int,
+  default=2,
+  help='number of convolutional layers'
+)
 
 FLAGS, unparsed = parser.parse_known_args()
 
@@ -216,9 +343,10 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				# feed_dict={images_placeholder: data.xtrain, activity_placeholder: data.ytrain, keep_prob_placeholder:1}
 				ops = [
 					train_loss_op,
+					estop_loss_op,
 					model.predict(eval_images)
 				]
-				losstrain,actpredict_eval = sess.run(ops)
+				losstrain,lossearlystop,actpredict_eval = sess.run(ops)
 
 				trainlist.append(losstrain) # list of loss on training set
 				evallist.append(losseval) # list of loss on eval set
@@ -234,8 +362,8 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				revalmean = np.mean(reval)
 				rmeanlist.append(revalmean) # list of  mean r eval on eval set
 				## Evaluate againts early stop data
-				feed_dict={images_placeholder: data.xstop, activity_placeholder: data.ystop, keep_prob_placeholder:1}
-				lossearlystop = sess.run(loss, feed_dict=feed_dict)
+				#feed_dict={images_placeholder: data.xstop, activity_placeholder: data.ystop, keep_prob_placeholder:1}
+				#lossearlystop = sess.run(loss, feed_dict=feed_dict)
 				earlystoplist.append(lossearlystop) # list of loss on early stop set
 
 				## plot and save training
@@ -270,6 +398,7 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 					if FLAGS.save:
 						plotandsaver(rval, step, loss_per_nueron_eval, lossbaselinenueron) #save the performance of network 
 
+		sess.close()
 		print("Final results")
 		print("Best perforance ")
 		print('r = %5.3f +- %5.3f;  squared (loss) = %.4f;  FVE = %5.3f' % (rmean, np.std(rval)/np.sqrt(data.numcell), losseval, FVEeval))
@@ -301,6 +430,7 @@ def baseline_error():
 	feed_dict={meanpredict_placeholder: meanpredict, y_: data.yeval}
 	loss_baseline_eval = sess.run(loss_baseline, feed_dict=feed_dict)
 	loss_baseline_eval_percell = sess.run(loss_baseline_percell, feed_dict=feed_dict)
+	sess.close()
 	#print and return baseline loss
 	print('')
 	print('Eval data baseline loss = %.4f' % (loss_baseline_eval))
@@ -313,8 +443,7 @@ def baseline_error():
 	print(manvare)
 	return loss_baseline_eval, loss_baseline_eval_percell
 
-
-def plotandsaver(rval,step, loss_per_nueron_eval, lossbaselinenueron):
+def gen_plots(rval):
 	figN, axN = plt.subplots()
 	bar_width = 0.40
 	xvals = np.arange(len(rval))+1-bar_width/2
@@ -322,11 +451,14 @@ def plotandsaver(rval,step, loss_per_nueron_eval, lossbaselinenueron):
 	axN.set_xlabel('cell', color='k')
 	axN.set_ylabel('r', color='k')
 	plt.savefig(pearsonsavedir)
+	plt.close(figN)
+
+def plotandsaver(rval,step, loss_per_nueron_eval, lossbaselinenueron):
+	# gen_plots(rval)
 	traintrials = data.traintrials
 	earlystoptrials = data.earlystoptrials
 	evaltrials = data.evaltrials
 	np.save(pearsonsavedatadir,[rval,step,loss_per_nueron_eval,lossbaselinenueron, evalvar,traintrials,earlystoptrials,evaltrials,FLAGS])
-	plt.close(figN)
  
   
 def network_save(step):

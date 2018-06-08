@@ -32,8 +32,8 @@ class LNLN(object):
 	def compile(self):
 		self.flatten = FlattenImg()
 
-		self.dense_1 = tf.contrib.keras.layers.Dense(self.num_units,activation='relu')
-		self.dense_2 = tf.contrib.keras.layers.Dense(self.num_cells,activation='relu')
+		self.dense_1 = tf.contrib.keras.layers.Dense(self.num_units,activation='sigmoid')
+		self.dense_2 = tf.contrib.keras.layers.Dense(self.num_cells,activation='sigmoid')
 
 		self.compiled = True
 

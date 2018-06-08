@@ -82,48 +82,38 @@ The hyper-parameters of the are written as a FLAG which can be adjusted.
 
 ```bash
 $ python3 runnet.py --help
-usage: lnln_hyperopt.py [-h] [--data_dir DATA_DIR] [--save_dir SAVE_DIR]
-                        [--save SAVE] [--savetraining SAVETRAINING]
-                        [--savenetwork SAVENETWORK] [--fileindex FILEINDEX]
-                        [--learning_rate LEARNING_RATE]
-                        [--max_steps MAX_STEPS] [--batch_size BATCH_SIZE]
-                        [--trainingset_frac TRAININGSET_FRAC]
-                        [--earlystop_frac EARLYSTOP_FRAC] [--conv1 CONV1]
-                        [--conv2 CONV2] [--conv1size CONV1SIZE] [--nk1 NK1]
-                        [--nstride1 NSTRIDE1] [--conv2size CONV2SIZE]
-                        [--nk2 NK2] [--nstride2 NSTRIDE2]
-                        [--numconvlayer NUMCONVLAYER] [--hidden1 HIDDEN1]
-                        [--hidden2 HIDDEN2] [--dropout DROPOUT]
+usage: runnet.py [-h] [--learning_rate LEARNING_RATE] [--max_steps MAX_STEPS]
+                 [--conv1 CONV1] [--conv2 CONV2] [--hidden1 HIDDEN1]
+                 [--hidden2 HIDDEN2] [--batch_size BATCH_SIZE]
+                 [--trainingset_frac TRAININGSET_FRAC]
+                 [--earlystop_frac EARLYSTOP_FRAC] [--dropout DROPOUT]
+                 [--save SAVE] [--savetraining SAVETRAINING]
+                 [--savenetwork SAVENETWORK] [--conv1size CONV1SIZE]
+                 [--nk1 NK1] [--nstride1 NSTRIDE1] [--conv2size CONV2SIZE]
+                 [--nk2 NK2] [--nstride2 NSTRIDE2] [--fileindex FILEINDEX]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --data_dir DATA_DIR   Data directory containing mat files of the format:
-                        0Nmean50ms_smallim_d2_crop
-  --save_dir SAVE_DIR   Directory to save outputs
-  --save SAVE           If true, save the results.
-  --savetraining SAVETRAINING
-                        If true, save the traing.
-  --savenetwork SAVENETWORK
-                        If true, save the network
-  --fileindex FILEINDEX
-                        index for which file to load
-  --dropout DROPOUT     ...
-
-training:
   --learning_rate LEARNING_RATE
                         Initial learning rate.
   --max_steps MAX_STEPS
                         Number of steps to run trainer.
+  --conv1 CONV1         Number of filters in conv 1.
+  --conv2 CONV2         Number of filters in conv 2.
+  --hidden1 HIDDEN1     Number of units in hidden layer 1.
+  --hidden2 HIDDEN2     Number of units in hidden layer 2. Not used.
   --batch_size BATCH_SIZE
                         Batch size.
   --trainingset_frac TRAININGSET_FRAC
                         Training set size (fraction of images).
   --earlystop_frac EARLYSTOP_FRAC
                         Early stop set size (fraction of images).
-
-CNN params:
-  --conv1 CONV1         Number of filters in conv 1.
-  --conv2 CONV2         Number of filters in conv 2.
+  --dropout DROPOUT     ...
+  --save SAVE           If true, save the results.
+  --savetraining SAVETRAINING
+                        If true, save the traing.
+  --savenetwork SAVENETWORK
+                        If true, save the network
   --conv1size CONV1SIZE
                         Size (linear) of convolution kernel larer 1.
   --nk1 NK1             Size of max pool kernel layer 1.
@@ -132,13 +122,8 @@ CNN params:
                         Size (linear) of convolution kernel larer 2.
   --nk2 NK2             Size of max pool kernel layer 2.
   --nstride2 NSTRIDE2   Size of max pool stride.
-  --numconvlayer NUMCONVLAYER
-                        number of convolutional layers
-
-hidden layer:
-  --hidden1 HIDDEN1     Number of units in hidden layer 1.
-  --hidden2 HIDDEN2     Number of units in hidden layer 2. Not used.
-
+  --fileindex FILEINDEX
+                        index for which file to load
 ```
 
 - FLAGS.learning_rate -- the learning rate
