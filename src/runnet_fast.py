@@ -216,10 +216,9 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				# feed_dict={images_placeholder: data.xtrain, activity_placeholder: data.ytrain, keep_prob_placeholder:1}
 				ops = [
 					train_loss_op,
-					estop_loss_op,
 					model.predict(eval_images)
 				]
-				losstrain,lossearlystop,actpredict_eval = sess.run(ops)
+				losstrain,actpredict_eval = sess.run(ops)
 
 				trainlist.append(losstrain) # list of loss on training set
 				evallist.append(losseval) # list of loss on eval set
@@ -235,8 +234,8 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				revalmean = np.mean(reval)
 				rmeanlist.append(revalmean) # list of  mean r eval on eval set
 				## Evaluate againts early stop data
-				#feed_dict={images_placeholder: data.xstop, activity_placeholder: data.ystop, keep_prob_placeholder:1}
-				#lossearlystop = sess.run(loss, feed_dict=feed_dict)
+				feed_dict={images_placeholder: data.xstop, activity_placeholder: data.ystop, keep_prob_placeholder:1}
+				lossearlystop = sess.run(loss, feed_dict=feed_dict)
 				earlystoplist.append(lossearlystop) # list of loss on early stop set
 
 				## plot and save training
@@ -271,7 +270,6 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 					if FLAGS.save:
 						plotandsaver(rval, step, loss_per_nueron_eval, lossbaselinenueron) #save the performance of network 
 
-		sess.close()
 		print("Final results")
 		print("Best perforance ")
 		print('r = %5.3f +- %5.3f;  squared (loss) = %.4f;  FVE = %5.3f' % (rmean, np.std(rval)/np.sqrt(data.numcell), losseval, FVEeval))
@@ -303,7 +301,6 @@ def baseline_error():
 	feed_dict={meanpredict_placeholder: meanpredict, y_: data.yeval}
 	loss_baseline_eval = sess.run(loss_baseline, feed_dict=feed_dict)
 	loss_baseline_eval_percell = sess.run(loss_baseline_percell, feed_dict=feed_dict)
-	sess.close()
 	#print and return baseline loss
 	print('')
 	print('Eval data baseline loss = %.4f' % (loss_baseline_eval))
@@ -316,7 +313,8 @@ def baseline_error():
 	print(manvare)
 	return loss_baseline_eval, loss_baseline_eval_percell
 
-def gen_plots(rval):
+
+def plotandsaver(rval,step, loss_per_nueron_eval, lossbaselinenueron):
 	figN, axN = plt.subplots()
 	bar_width = 0.40
 	xvals = np.arange(len(rval))+1-bar_width/2
@@ -324,14 +322,11 @@ def gen_plots(rval):
 	axN.set_xlabel('cell', color='k')
 	axN.set_ylabel('r', color='k')
 	plt.savefig(pearsonsavedir)
-	plt.close(figN)
-
-def plotandsaver(rval,step, loss_per_nueron_eval, lossbaselinenueron):
-	# gen_plots(rval)
 	traintrials = data.traintrials
 	earlystoptrials = data.earlystoptrials
 	evaltrials = data.evaltrials
 	np.save(pearsonsavedatadir,[rval,step,loss_per_nueron_eval,lossbaselinenueron, evalvar,traintrials,earlystoptrials,evaltrials,FLAGS])
+	plt.close(figN)
  
   
 def network_save(step):
