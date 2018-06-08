@@ -6,6 +6,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 plt.ioff()
 
+from src.parser import gen_parser
 from src.runnet_fast import baseline_error, run_training, filearray
 from src.buildnet import LNLN
 from src.utils import DataLoader
@@ -45,6 +46,7 @@ def register_model(_):
 
 
 if __name__ == '__main__':
+    parser = gen_parser()
     os.path.exists(os.path.join(os.getcwd(),'lnln_hyperopt',str(150)))
     for _ in tqdm(np.arange(NUM_TRIALS)):
         tf.app.run(main=register_model)
