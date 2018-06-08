@@ -32,8 +32,15 @@ class LNLN(object):
 	def compile(self):
 		self.flatten = FlattenImg()
 
-		self.dense_1 = tf.contrib.keras.layers.Dense(self.num_units,activation='sigmoid')
-		self.dense_2 = tf.contrib.keras.layers.Dense(self.num_cells,activation='sigmoid')
+		self.dense_1 = tf.contrib.keras.layers.Dense(self.num_units,activation='relu')
+		with tf.variable_scope('scaled_nonlinear'):
+			print("building non linear layer")
+			weights = tf.get_variable('weights',
+				initializer = .1+tf.truncated_normal([self.num_units],
+					stddev=0.02))
+			self.biases = tf.get_variable('biases', initializer = tf.zeros([self.num_units]))
+			self.diagweights1 = tf.diag(weights)
+		self.dense_2 = tf.contrib.keras.layers.Dense(self.num_cells,activation='relu')
 
 		self.compiled = True
 
@@ -48,7 +55,9 @@ class LNLN(object):
 
 		flat_img = self.flatten(images)
 		x = self.dense_1(flat_img)
-		r = self.dense_2(x)
+		sigmatmul = tf.matmul(x, self.diagweights1)
+		nonlinear = tf.add(sigmatmul, self.biases)
+		r = self.dense_2(nonlinear)
 
 		self.output = r
 
