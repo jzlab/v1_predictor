@@ -1,6 +1,6 @@
-UNITS=150
+UNITS=900
 
-for i in 1 2
+for i in 1 2 3 4 5 6 7
 do
     SAVE_PATH="lnln_hyperopt/$UNITS/run_$i"
     echo "##########################"
