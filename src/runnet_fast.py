@@ -239,9 +239,6 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 				#lossearlystop = sess.run(loss, feed_dict=feed_dict)
 				earlystoplist.append(lossearlystop) # list of loss on early stop set
 
-				## plot and save training
-				if FLAGS.savetraining:
-					mansavefig(trainlist, earlystoplist, evallist, rmeanlist, steplist, lossbaseline)
 
 				## Finding the minumum loss on the early stop data set
 				## check if new early stop min. If so, treat as best trained nextwork 
@@ -270,6 +267,9 @@ def run_training(lossbaseline, lossbaselinenueron, model=None, dataset=None):
 						network_save(step) #save the parameters of network
 					if FLAGS.save:
 						plotandsaver(rval, step, loss_per_nueron_eval, lossbaselinenueron) #save the performance of network 
+			## plot and save training
+			if FLAGS.savetraining:
+				mansavefig(trainlist, earlystoplist, evallist, rmeanlist, steplist, lossbaseline)
 
 		sess.close()
 		print("Final results")

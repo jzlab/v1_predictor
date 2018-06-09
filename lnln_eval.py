@@ -41,4 +41,4 @@ def wrapper(_):
 if __name__ == '__main__':
     parser = gen_parser()
     os.path.exists(os.path.join(os.getcwd(),'lnln_eval'))
-    tf.app.run(main=register_model)
+    tf.app.run(main=wrapper)

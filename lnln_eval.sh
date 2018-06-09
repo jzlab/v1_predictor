@@ -6,7 +6,7 @@ UNITS=250
 for i in 1 2 3 4 5 6 7
 do
 
-    for fileindex in 1 3 4 5 6 7 8 9 10
+    for fileindex in 0 2 3 4 5 6 7 8 9
     do
         SAVE_PATH="lnln_eval/kohn_$fileindex/trial_$i"
         echo "##########################"
