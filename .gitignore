@@ -105,3 +105,7 @@ ENV/
 
 # Ignore directories created by software package
 manualsave/
+
+# Ignore LNLN evaluation dirs
+lnln_hyperopt/
+lnln_eval/

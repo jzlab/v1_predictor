@@ -1,0 +1,5 @@
+# Ignore expanded mat files from data.tar.gz
+*.mat
+
+# Ignore LNLN_hyperopt
+LNLN_hyperopt.tar.gz
