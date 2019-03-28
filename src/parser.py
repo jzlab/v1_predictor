@@ -148,3 +148,8 @@ def gen_parser():
     )
 
     return parser
+
+def default_flags():
+    FLAGS,_ = gen_parser().parse_known_args()
+
+    return FLAGS
